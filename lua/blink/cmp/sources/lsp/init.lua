@@ -156,15 +156,28 @@ end
 
 --- Execute ---
 
-function lsp:execute(_, item, callback)
+function lsp:execute(source, item, callback)
   local client = vim.lsp.get_client_by_id(item.client_id)
-  if client and item.command then
-    local success, request_id = client.request('workspace/executeCommand', item.command, function() callback() end)
-    if success and request_id ~= nil then
-      return function() client.cancel_request(request_id) end
-    end
-  else
+  local command_data = item.command
+
+  if not (client and command_data) then
     callback()
+    return
+  end
+
+  local fn = vim.lsp.commands[command_data.command]
+  if fn then
+    fn(command_data, {
+      bufnr = source.bufnr,
+      client_id = item.client_id,
+    })
+    callback()
+    return
+  end
+
+  local success, request_id = client.request('workspace/executeCommand', command_data, function() callback() end)
+  if success and request_id ~= nil then
+    return function() client.cancel_request(request_id) end
   end
 end
 
