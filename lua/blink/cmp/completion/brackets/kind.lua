@@ -27,6 +27,9 @@ local function add_brackets(ctx, filetype, item)
     return 'skipped', text_edit, 0
   end
 
+  -- if the item has a command, the remaining text should be applied by the command, skip
+  if item.command ~= nil then return 'skipped', text_edit, 0 end
+
   -- check if configuration indicates we should skip
   if not utils.should_run_resolution(ctx, filetype, 'kind') then return 'check_semantic_token', text_edit, 0 end
   -- cannot have brackets, skip
